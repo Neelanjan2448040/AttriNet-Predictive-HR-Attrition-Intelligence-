@@ -1,3 +1,7 @@
+import os
+os.environ["STREAMLIT_WATCH_FILE_SYSTEM"] = "false"
+
+
 # app.py
 import streamlit as st
 import pandas as pd
@@ -421,3 +425,4 @@ elif page == "Model Evaluation":
     cm2 = confusion_matrix(y_test_split, y_pred_tab)
     fig2 = px.imshow(cm2, text_auto=True, labels=dict(x="Pred", y="True"), x=["No","Yes"], y=["No","Yes"], color_continuous_scale="Blues")
     st.plotly_chart(fig2, use_container_width=True)
+
