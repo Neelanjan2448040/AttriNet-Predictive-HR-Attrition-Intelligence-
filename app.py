@@ -26,41 +26,6 @@ st.set_page_config(page_title="HR Attrition — Dark Dashboard",
                    layout="wide",
                    initial_sidebar_state="expanded")
 
-# Minimal in-app dark styling (works without config.toml)
-st.markdown(
-    """
-    <style>
-    :root {
-        --primary-color: #00FFAA;
-        --background-color: #0E1117;
-        --secondary-background-color: #262730;
-        --text-color: #FAFAFA;
-        --font: 'sans serif';
-    }
-    .stApp {
-        background-color: var(--background-color);
-        color: var(--text-color);
-        font-family: var(--font);
-    }
-    .css-1y4p8pa { background-color: var(--background-color); }
-    .block-container {
-        padding-top: 1rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-    .stButton>button {
-        background-color: var(--primary-color);
-        color: black;
-        border-radius: 8px;
-    }
-    .stMetric > div {
-        color: var(--text-color);
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 # ---------------------------
 # Load dataset
 # ---------------------------
@@ -458,6 +423,7 @@ elif page == "Model Evaluation":
     cm2 = confusion_matrix(y_test_split, y_pred_tab)
     fig2 = px.imshow(cm2, text_auto=True, labels=dict(x="Pred", y="True"), x=["No","Yes"], y=["No","Yes"], color_continuous_scale="Blues")
     st.plotly_chart(fig2, use_container_width=True)
+
 
 
 
