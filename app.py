@@ -218,19 +218,28 @@ if page == "Home":
 elif page == "Visualizations":
     st.title("📊 Visualizations")
     tabs = st.tabs(["Overview", "Demographics", "Compensation", "Role & Work", "Correlation"])
+
+    # Create SalaryBand once safely to avoid repeated creation on rerun
+    if "SalaryBand" not in df.columns and "MonthlyIncome" in df.columns:
+        bins = [0, 3000, 6000, 9000, 12000, 15000, 25000]
+        labels = ["Very Low","Low","Medium","High","Very High","Top"]
+        df['SalaryBand'] = pd.cut(df['MonthlyIncome'], bins=bins, labels=labels)
+
     with tabs[0]:
         st.subheader("Attrition Overview")
         fig = px.histogram(df, x="Attrition", color="Attrition", title="Attrition counts")
         st.plotly_chart(fig, use_container_width=True)
 
         st.subheader("Attrition by Gender & Marital Status")
-        fig = px.histogram(df, x="Gender", color="Attrition", barmode="group", title="Gender vs Attrition")
-        st.plotly_chart(fig, use_container_width=True)
+        if 'Gender' in df.columns and 'Attrition' in df.columns:
+            fig = px.histogram(df, x="Gender", color="Attrition", barmode="group", title="Gender vs Attrition")
+            st.plotly_chart(fig, use_container_width=True)
 
     with tabs[1]:
         st.subheader("Age distribution by Attrition")
-        fig = px.histogram(df, x="Age", color="Attrition", nbins=25, title="Age distribution (by Attrition)")
-        st.plotly_chart(fig, use_container_width=True)
+        if 'Age' in df.columns:
+            fig = px.histogram(df, x="Age", color="Attrition", nbins=25, title="Age distribution (by Attrition)")
+            st.plotly_chart(fig, use_container_width=True)
 
         st.subheader("Education Field vs Attrition")
         if "EducationField" in df.columns:
@@ -243,12 +252,10 @@ elif page == "Visualizations":
             fig = px.histogram(df, x="MonthlyIncome", color="Attrition", nbins=40, title="Monthly income by Attrition")
             st.plotly_chart(fig, use_container_width=True)
 
-            # Salary bands
-            bins = [0, 3000, 6000, 9000, 12000, 15000, 25000]
-            labels = ["Very Low","Low","Medium","High","Very High","Top"]
-            df['SalaryBand'] = pd.cut(df['MonthlyIncome'], bins=bins, labels=labels)
-            fig = px.histogram(df, x="SalaryBand", color="Attrition", barmode="group", title="Attrition by Salary Band")
-            st.plotly_chart(fig, use_container_width=True)
+            # Salary bands plot (safe check if created above)
+            if "SalaryBand" in df.columns:
+                fig = px.histogram(df, x="SalaryBand", color="Attrition", barmode="group", title="Attrition by Salary Band")
+                st.plotly_chart(fig, use_container_width=True)
 
     with tabs[3]:
         st.subheader("OverTime vs Attrition")
@@ -270,17 +277,15 @@ elif page == "Visualizations":
     with tabs[4]:
         st.subheader("Correlation heatmap (numeric features)")
         numeric = df.select_dtypes(include=[np.number]).copy()
-        # if Attrition encoded as object, convert for corr
         if numeric.shape[1] > 1:
             corr = numeric.corr()
             fig = px.imshow(
                 corr,
                 text_auto=True,
                 color_continuous_scale='RdBu_r',
-                zmin=-1, zmax=1,  ##
+                zmin=-1, zmax=1,
                 title='Correlation heatmap'
             )
-            # make annotation text clear and larger
             fig.update_traces(texttemplate="%{z:.2f}", textfont=dict(size=14))
             fig.update_layout(coloraxis_colorbar=dict(title="Correlation"),
                               margin=dict(l=50, r=50, t=50, b=50),
@@ -288,8 +293,8 @@ elif page == "Visualizations":
                               width=900,
                               height=900,
                               xaxis=dict(tickangle=45))
-                              
             st.plotly_chart(fig, use_container_width=False)
+
 
 # ---------------------------
 # Prediction page
@@ -298,41 +303,34 @@ elif page == "Prediction":
     st.title("🔮 Predict Attrition")
     st.markdown("Fill employee details below. Click **Predict** to get a model prediction, probability, top factors and HR recommendations.")
 
-    # Build many inputs dynamically
     input_vals = build_input_form(df_vis)
-
-    # Convert single dict to DataFrame (one row)
     input_df = pd.DataFrame([input_vals])
 
-    # Button to predict
     if st.button("🔍 Predict"):
-        # encode categorical values using label_encoders
+        # Encode categorical values
         input_encoded = input_df.copy()
         for c, le in label_encoders.items():
             if c in input_encoded.columns:
-                # if user value is unseen, transform via adding to classes (safe fallback)
                 try:
                     input_encoded[c] = le.transform(input_encoded[c])
                 except Exception:
-                    input_encoded[c] = 0
+                    input_encoded[c] = 0  # fallback for unseen
 
-        # Use the prepared X_prepared's column ordering:
+        # Prepare row with all columns and default zeros
         row = pd.DataFrame(np.zeros((1, X_prepared.shape[1])), columns=X_prepared.columns)
         for col in input_encoded.columns:
             if col in row.columns:
                 row.at[0, col] = input_encoded.at[0, col]
 
-        # For numeric columns, scale using stored scaler
+        # Scale numeric columns properly
         num_cols = scaler.feature_names_in_ if hasattr(scaler, "feature_names_in_") else X_prepared.select_dtypes(include=[np.number]).columns.tolist()
         try:
             row_num = row[num_cols]
             row_num_scaled = scaler.transform(row_num)
             row.loc[:, num_cols] = row_num_scaled
         except Exception:
-            # fallback: leave as-is
             pass
 
-        # Choose model
         if model_choice == "ANN (MLP)":
             pred = ann_model.predict(row)[0]
             proba = ann_model.predict_proba(row)[0]
@@ -343,9 +341,17 @@ elif page == "Prediction":
                 except Exception:
                     imp = pd.Series(rf_model.feature_importances_, index=X_prepared.columns).sort_values(ascending=False)
         else:
-            preds = tabnet_model.predict(row.values)
-            pred = int(preds[0])
-            proba = tabnet_model.predict_proba(row.values)[0]
+            # TabNet expects float32 numpy arrays
+            row_np = row.values.astype(np.float32)
+            try:
+                preds = tabnet_model.predict(row_np)
+                pred = int(preds[0])
+                proba = tabnet_model.predict_proba(row_np)[0]
+            except Exception as e:
+                st.error(f"Error in TabNet prediction: {e}")
+                pred = 0
+                proba = [1.0, 0.0]
+
             try:
                 imp_values = tabnet_model.feature_importances_
                 imp = pd.Series(imp_values, index=X_prepared.columns).sort_values(ascending=False)
@@ -358,7 +364,6 @@ elif page == "Prediction":
         st.subheader("Prediction Result")
         colp, cold = st.columns([2,1])
         with colp:
-            # Gauge chart
             figg = go.Figure(go.Indicator(
                 mode="gauge+number+delta",
                 value=prob_attrition*100,
@@ -369,7 +374,6 @@ elif page == "Prediction":
             ))
             st.plotly_chart(figg, use_container_width=True, height=300)
 
-            # Plain label
             if pred == 1:
                 st.error("⚠️ Model Prediction: Employee likely to **leave**")
             else:
@@ -380,14 +384,12 @@ elif page == "Prediction":
             st.write("**Probability (No / Yes)**")
             st.write([f"{p:.3f}" for p in proba])
 
-        # Top contributing features (global style)
         st.subheader("Top contributing features (model-driven)")
         top_imp = imp.head(8)
         fig_imp = px.bar(x=top_imp.values[::-1], y=top_imp.index[::-1], orientation='h',
                          labels={'x':'Importance','y':'Feature'}, height=350)
         st.plotly_chart(fig_imp, use_container_width=True)
 
-        # Debug display (raw input & encoded/scaled row) — kept for transparency
         if st.checkbox("Show raw input & encoded (debug)"):
             st.write(pd.DataFrame([input_vals]).T.rename(columns={0:"value"}))
             st.write("Encoded/scaled features passed to model:")
@@ -423,6 +425,7 @@ elif page == "Model Evaluation":
     cm2 = confusion_matrix(y_test_split, y_pred_tab)
     fig2 = px.imshow(cm2, text_auto=True, labels=dict(x="Pred", y="True"), x=["No","Yes"], y=["No","Yes"], color_continuous_scale="Blues")
     st.plotly_chart(fig2, use_container_width=True)
+
 
 
 
