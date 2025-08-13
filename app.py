@@ -111,14 +111,26 @@ df_vis, X_raw, X_prepared, y, label_encoders, scaler = preprocess_and_prepare(df
 @st.cache_resource(show_spinner=True)
 def train_models(X_prepared, y):
     # Train ANN (MLPClassifier as ANN)
-    ann = MLPClassifier(hidden_layer_sizes=(64,32), max_iter=500, random_state=42)
+    ann = MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42)
     ann.fit(X_prepared, y)
 
-    # Train TabNet (use raw features but numeric scaled and categorical as already encoded)
+    # Create train/validation split for TabNet
+    X_train_tab, X_val_tab, y_train_tab, y_val_tab = train_test_split(
+        X_prepared.values, y.values, test_size=0.2, random_state=42
+    )
+
+    # Train TabNet with early stopping
     tabnet = TabNetClassifier(seed=42, verbose=0)
-    tabnet.fit(X_prepared.values, y.values,
-               max_epochs=50, patience=10,
-               batch_size=256, virtual_batch_size=64)
+    tabnet.fit(
+        X_train_tab, y_train_tab,
+        eval_set=[(X_val_tab, y_val_tab)],
+        eval_name=['val'],
+        eval_metric=['accuracy'],
+        max_epochs=50,
+        patience=10,
+        batch_size=256,
+        virtual_batch_size=64
+    )
 
     # Train a RandomForest for quick global importances (helpful fallback)
     rf = RandomForestClassifier(n_estimators=200, random_state=42)
@@ -446,5 +458,6 @@ elif page == "Model Evaluation":
     cm2 = confusion_matrix(y_test_split, y_pred_tab)
     fig2 = px.imshow(cm2, text_auto=True, labels=dict(x="Pred", y="True"), x=["No","Yes"], y=["No","Yes"], color_continuous_scale="Blues")
     st.plotly_chart(fig2, use_container_width=True)
+
 
 
