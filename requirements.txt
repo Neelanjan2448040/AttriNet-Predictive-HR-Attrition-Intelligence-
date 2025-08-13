@@ -1,0 +1,9 @@
+streamlit>=1.22.0
+pandas
+numpy
+scikit-learn
+plotly
+matplotlib
+seaborn
+pytorch-tabnet
+torch
