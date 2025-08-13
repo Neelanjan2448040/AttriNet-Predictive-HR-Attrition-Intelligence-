@@ -135,6 +135,7 @@ def build_input_form(df_vis):
 # Home Page
 # ---------------------------
 if page == "Home":
+    st.title("💼AttriNet– Predictive HR Attrition Intelligence ")
     c1, c2, c3 = st.columns(3)
     c1.metric("Employees", f"{df_full.shape[0]}")
     c2.metric("Features", f"{df_full.shape[1]}")
@@ -582,3 +583,4 @@ elif page == "Model Evaluation":
     except Exception as e:
         st.error(f"Model evaluation setup failed: {str(e)}")
         st.error("Please ensure models are trained properly.")
+
