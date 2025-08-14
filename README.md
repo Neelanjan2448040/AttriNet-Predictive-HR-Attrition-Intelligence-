@@ -10,16 +10,16 @@
 **AttriNet** is an end-to-end machine learning application that predicts employee attrition. It allows HR professionals to visualize key data trends, get instant predictions for individual employees, and evaluate the performance of the predictive models, all within a user-friendly web interface.
 
 ### 🎯 Why This Dashboard?
-✅ **For HR Professionals**: Make proactive, data-driven decisions to improve employee retention by identifying at-risk individuals.
-✅ **For Data Scientists & Developers**: Explore a practical example of a deployed Streamlit application, from data preprocessing and model training to creating an interactive user interface.
+✅ **For HR Professionals**: Make proactive, data-driven decisions to improve employee retention by identifying at-risk individuals.<br>
+✅ **For Data Scientists & Developers**: Explore a practical example of a deployed Streamlit application, from data preprocessing and model training to creating an interactive user interface.<br>
 
 ---
 
 ## ✨ Features:
-✔️ **Interactive Data Visuals** – Explore the dataset with dynamic charts for demographics, compensation, and work-related factors.
-✔️ **Multiple Prediction Models** – Choose between an Artificial Neural Network (ANN) and a TabNet model for predictions.
-✔️ **Individual Attrition Prediction** – Input an employee's details to receive an instant prediction and a probability score.
-✔️ **Top Predictive Factors** – Understand which features most heavily influence the model's prediction for any given employee.
+✔️ **Interactive Data Visuals** – Explore the dataset with dynamic charts for demographics, compensation, and work-related factors.<br>
+✔️ **Multiple Prediction Models** – Choose between an Artificial Neural Network (ANN) and a TabNet model for predictions.<br>
+✔️ **Individual Attrition Prediction** – Input an employee's details to receive an instant prediction and a probability score.<br>
+✔️ **Top Predictive Factors** – Understand which features most heavily influence the model's prediction for any given employee.<br>
 ✔️ **Transparent Model Evaluation** – Review confusion matrices and classification reports for all models on a hold-out test set.
 
 ---
@@ -32,8 +32,8 @@
 
 ## 🔧 Installation & Setup:
 ### **Prerequisites:**
--Python 3.8+
--Git & Git LFS
+-Python 3.8+ <br>
+-Git & Git LFS <br>
 
 ### **Local Setup:**
 Clone the repository:
